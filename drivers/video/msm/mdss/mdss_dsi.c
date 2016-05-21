@@ -28,6 +28,10 @@
 #include <linux/msm-bus.h>
 #include <linux/pm_qos.h>
 
+#ifdef CONFIG_STATE_NOTIFIER
+#include <linux/state_notifier.h>
+#endif
+
 #include "mdss.h"
 #include "mdss_panel.h"
 #include "mdss_dsi.h"
@@ -2532,6 +2536,10 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 		if (ctrl_pdata->on_cmds.link_state == DSI_HS_MODE)
 			rc = mdss_dsi_unblank(pdata);
 		pdata->panel_info.esd_rdy = true;
+#ifdef CONFIG_STATE_NOTIFIER
+		if (!use_fb_notifier)
+			state_resume();
+#endif
 		break;
 	case MDSS_EVENT_BLANK:
 		power_state = (int) (unsigned long) arg;
@@ -2546,6 +2554,10 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 		mutex_lock(&ctrl_pdata->dsi_ctrl_mutex);
 		rc = mdss_dsi_off(pdata, power_state);
 		mutex_unlock(&ctrl_pdata->dsi_ctrl_mutex);
+#ifdef CONFIG_STATE_NOTIFIER
+		if (!use_fb_notifier)
+			state_suspend();
+#endif
 		break;
 	case MDSS_EVENT_CONT_SPLASH_FINISH:
 		if (ctrl_pdata->off_cmds.link_state == DSI_LP_MODE)

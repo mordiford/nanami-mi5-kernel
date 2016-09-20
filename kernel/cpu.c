@@ -408,6 +408,9 @@ out_release:
 	trace_sched_cpu_hotplug(cpu, err, 0);
 	if (!err)
 		cpu_notify_nofail(CPU_POST_DEAD | mod, hcpu);
+
+	pr_debug("%s by %s[%d]\n", __func__, current->comm, current->pid);
+
 	return err;
 }
 

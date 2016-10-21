@@ -2522,7 +2522,6 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 			rc = mdss_dsi_unblank(pdata);
 		pdata->panel_info.esd_rdy = true;
 #ifdef CONFIG_STATE_NOTIFIER
-		if (!use_fb_notifier)
 			state_resume();
 #endif
 		break;
@@ -2540,7 +2539,6 @@ static int mdss_dsi_event_handler(struct mdss_panel_data *pdata,
 		rc = mdss_dsi_off(pdata, power_state);
 		mutex_unlock(&ctrl_pdata->dsi_ctrl_mutex);
 #ifdef CONFIG_STATE_NOTIFIER
-		if (!use_fb_notifier)
 			state_suspend();
 #endif
 		break;

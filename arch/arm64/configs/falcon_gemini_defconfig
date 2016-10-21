@@ -1,4 +1,4 @@
-CONFIG_LOCALVERSION="-falcon-kernel-1.2.1"
+CONFIG_LOCALVERSION="-falcon-kernel-1.3-experimental"
 CONFIG_SYSVIPC=y
 CONFIG_AUDIT=y
 # CONFIG_AUDITSYSCALL is not set

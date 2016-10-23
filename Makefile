@@ -408,6 +408,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -Wno-format-security \
 		   -Wno-implicit-function-declaration \
 		   -Wno-declaration-after-statement \
+		   -Wno-format-extra-args \
 		   -std=gnu89
 		   -mcpu=cortex-a57.cortex-a53 -mtune=cortex-a57.cortex-a53
 		   

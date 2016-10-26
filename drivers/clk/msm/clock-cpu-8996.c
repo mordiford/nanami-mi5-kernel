@@ -1278,8 +1278,6 @@ static void populate_opp_table(struct platform_device *pdev)
 	    "Failed to add OPP levels for CBF\n");
 }
 
-static int perfclspeedbin;
-
 unsigned long pwrcl_early_boot_rate = 883200000;
 unsigned long perfcl_early_boot_rate = 883200000;
 unsigned long cbf_early_boot_rate = 614400000;
@@ -1308,12 +1306,10 @@ static int cpu_clock_8996_driver_probe(struct platform_device *pdev)
 	}
 
 	pte_efuse = readl_relaxed(vbases[EFUSE_BASE]);
-	perfclspeedbin = ((pte_efuse >> EFUSE_SHIFT) & EFUSE_MASK);
-	dev_info(&pdev->dev, "using perf/pwr/cbf speed bin 0 and pvs_ver 0\n",
-		 perfclspeedbin, pvs_ver);
+	dev_info(&pdev->dev, "using perf/pwr/cbf speed bin 0 and pvs_ver 0\n");
 
 	snprintf(perfclspeedbinstr, ARRAY_SIZE(perfclspeedbinstr),
-			"qcom,perfcl-speedbin0-v0", perfclspeedbin, pvs_ver);
+			"qcom,perfcl-speedbin0-v0");
 
 	ret = of_get_fmax_vdd_class(pdev, &perfcl_clk.c, perfclspeedbinstr);
 	if (ret) {
@@ -1322,7 +1318,8 @@ static int cpu_clock_8996_driver_probe(struct platform_device *pdev)
 	}
 
 	snprintf(pwrclspeedbinstr, ARRAY_SIZE(pwrclspeedbinstr),
-			"qcom,pwrcl-speedbin0-v0", perfclspeedbin, pvs_ver);
+			"qcom,pwrcl-speedbin0-v0");
+
 	ret = of_get_fmax_vdd_class(pdev, &pwrcl_clk.c, pwrclspeedbinstr);
 	if (ret) {
 		dev_err(&pdev->dev, "Unable to retrieve plan for pwrcl\n");
@@ -1330,7 +1327,7 @@ static int cpu_clock_8996_driver_probe(struct platform_device *pdev)
 	}
 
 	snprintf(cbfspeedbinstr, ARRAY_SIZE(cbfspeedbinstr),
-			"qcom,cbf-speedbin0-v0", perfclspeedbin, pvs_ver);
+			"qcom,cbf-speedbin0-v0");
 
 	ret = of_get_fmax_vdd_class(pdev, &cbf_clk.c, cbfspeedbinstr);
 	if (ret) {

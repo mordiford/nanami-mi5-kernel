@@ -1287,7 +1287,6 @@ static int cpu_clock_8996_driver_probe(struct platform_device *pdev)
 {
 	int ret, cpu;
 	unsigned long pwrclrate, perfclrate, cbfrate;
-	int pvs_ver = 0;
 	u32 pte_efuse;
 	char perfclspeedbinstr[] = "qcom,perfcl-speedbinXX-vXX";
 	char pwrclspeedbinstr[] = "qcom,pwrcl-speedbinXX-vXX";

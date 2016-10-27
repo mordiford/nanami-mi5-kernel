@@ -3801,7 +3801,6 @@ int msm_gpucc_8996_probe(struct platform_device *pdev)
 	int rc;
 	struct regulator *reg;
 	u64 efuse;
-	int speed_bin;
 	int is_v2_gpu, is_v3_0_gpu;
 	char speedbin_str[] = "qcom,gfxfreq-speedbin0";
 	char mx_speedbin_str[] = "qcom,gfxfreq-mx-speedbin0";
@@ -3864,35 +3863,24 @@ int msm_gpucc_8996_probe(struct platform_device *pdev)
 	is_v3_0_gpu = of_device_is_compatible(of_node, "qcom,gpucc-8996-v3.0");
 
 	efuse = readl_relaxed(base);
-	speed_bin = ((efuse >> EFUSE_SHIFT) & EFUSE_MASK);
-	dev_info(&pdev->dev, "using speed bin %u\n", speed_bin);
+	dev_info(&pdev->dev, "using speed bin 0");
 	snprintf(speedbin_str, ARRAY_SIZE(speedbin_str),
-				"qcom,gfxfreq-speedbin%d", speed_bin);
+				"qcom,gfxfreq-speedbin0");
 	snprintf(mx_speedbin_str, ARRAY_SIZE(mx_speedbin_str),
-				"qcom,gfxfreq-mx-speedbin%d", speed_bin);
+				"qcom,gfxfreq-mx-speedbin0");
 
 	rc = of_get_fmax_vdd_class(pdev, &gpu_mx_clk.c, mx_speedbin_str);
 	if (rc) {
-		dev_err(&pdev->dev, "Can't get speed bin for gpu_mx_clk. Falling back to zero.\n");
-		rc = of_get_fmax_vdd_class(pdev, &gpu_mx_clk.c,
-						"qcom,gfxfreq-mx-speedbin0");
-		if (rc) {
-			dev_err(&pdev->dev, "Unable to get gpu mx freq-corner mapping info\n");
-			return rc;
-		}
+		dev_err(&pdev->dev, "Unable to get gpu mx freq-corner mapping info\n");
+		return rc;
 	}
 
 	if (!is_v2_gpu && !is_v3_gpu && !is_v3_0_gpu) {
 		rc = of_get_fmax_vdd_class(pdev, &gfx3d_clk_src.c,
 							speedbin_str);
 		if (rc) {
-			dev_err(&pdev->dev, "Can't get speed bin for gfx3d_clk_src. Falling back to zero.\n");
-			rc = of_get_fmax_vdd_class(pdev, &gfx3d_clk_src.c,
-					    "qcom,gfxfreq-speedbin0");
-			if (rc) {
-				dev_err(&pdev->dev, "Unable to get gfx freq-corner info for gfx3d_clk!\n");
-				return rc;
-			}
+			dev_err(&pdev->dev, "Unable to get gfx freq-corner info for gfx3d_clk!\n");
+			return rc;
 		}
 
 		clk_ops_gpu = clk_ops_rcg;
@@ -3907,13 +3895,8 @@ int msm_gpucc_8996_probe(struct platform_device *pdev)
 		rc = of_get_fmax_vdd_class(pdev, &gfx3d_clk_src_v2.c,
 							speedbin_str);
 		if (rc) {
-			dev_err(&pdev->dev, "Can't get speed bin for gfx3d_clk_src. Falling back to zero.\n");
-			rc = of_get_fmax_vdd_class(pdev, &gfx3d_clk_src_v2.c,
-					    "qcom,gfxfreq-speedbin0");
-			if (rc) {
-				dev_err(&pdev->dev, "Unable to get gfx freq-corner info for gfx3d_clk!\n");
-				return rc;
-			}
+			dev_err(&pdev->dev, "Unable to get gfx freq-corner info for gfx3d_clk!\n");
+			return rc;
 		}
 
 		clk_ops_gpu = clk_ops_mux_div_clk;

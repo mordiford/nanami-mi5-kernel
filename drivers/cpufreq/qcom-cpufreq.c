@@ -28,7 +28,6 @@
 #include <linux/platform_device.h>
 #include <linux/of.h>
 #include <trace/events/power.h>
-
 static DEFINE_MUTEX(l2bw_lock);
 
 static struct clk *cpu_clk[NR_CPUS];
@@ -143,8 +142,45 @@ static int msm_cpufreq_init(struct cpufreq_policy *policy)
 		if (cpu_clk[cpu] == cpu_clk[policy->cpu])
 			cpumask_set_cpu(cpu, policy->cpus);
 
-	if (cpufreq_frequency_table_cpuinfo(policy, table))
+	/* TO:DO
+	 *
+	 * Find speed bin to set appropriate default clock, only need to find one speedbin as both 	    * clusters will share the same value
+	 *
+	*/
+
+	if (cpufreq_frequency_table_cpuinfo(policy, table)){
 		pr_err("cpufreq: failed to get policy min/max\n");
+		
+		/*
+		 * Define default CPU frequency rules
+		*/		
+		//ARM LITTLE
+		if (policy->cpu <= 1)
+	 	{
+	 		policy->cpuinfo.min_freq = 307200;
+	 		policy->cpuinfo.max_freq = 1593600;
+	 	}
+		//ARM big
+		else
+	 	{
+	 		policy->cpuinfo.min_freq = 307200;
+	 		policy->cpuinfo.max_freq = 2150400;
+		}
+	}
+
+	//Set default frequencies
+ 	//ARM LITTLE
+	if (policy->cpu <= 1)
+	{
+	 	policy->min = 307200;
+	 	policy->max = 1593600;
+	}
+	//ARM big
+	else
+	{
+		policy->min = 307200;
+ 		policy->max = 2150400;
+	}
 
 	cur_freq = clk_get_rate(cpu_clk[policy->cpu])/1000;
 

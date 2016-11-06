@@ -1290,7 +1290,7 @@
 &pmi8994_charger {
 	qcom,fastchg-current-ma = <2300>;
 	qcom,float-voltage-mv = <4400>;
-	qcom,thermal-mitigation = <1500 1200 1000 0>;
+	qcom,thermal-mitigation = <1800 1200 1000 0>;
 	qcom,fastchg-current-comp = <900>;
 	qcom,float-voltage-comp = <16>;
 };

@@ -28,7 +28,7 @@
 
 static unsigned int use_input_evts_with_hi_slvt_detect;
 static struct mutex managed_cpus_lock;
-static int touchboost = 1;
+static int touchboost = 0;
 
 
 /* Maximum number to clusters that this module will manage*/
@@ -403,10 +403,9 @@ static int set_cpu_min_freq(const char *buf, const struct kernel_param *kp)
 	struct cpufreq_policy policy;
 	cpumask_var_t limit_mask;
 	int ret;
-	const char *reset = "0:0 1:0 2:0 3:0";
 
 	if (touchboost == 0)
-		cp = reset;
+		return 0;
 
 	while ((cp = strpbrk(cp + 1, " :")))
 		ntokens++;
@@ -415,10 +414,7 @@ static int set_cpu_min_freq(const char *buf, const struct kernel_param *kp)
 	if (!(ntokens % 2))
 		return -EINVAL;
 
-	if (touchboost == 0)
-		cp = reset;
-	else
-		cp = buf;
+	cp = buf;
 
 	cpumask_clear(limit_mask);
 	for (i = 0; i < ntokens; i += 2) {
@@ -458,6 +454,10 @@ static int set_cpu_min_freq(const char *buf, const struct kernel_param *kp)
 		for_each_cpu(j, policy.related_cpus)
 			cpumask_clear_cpu(j, limit_mask);
 	}
+
+	if (touchboost ==0)
+		return 0;	
+
 	put_online_cpus();
 #endif
 

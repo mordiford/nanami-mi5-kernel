@@ -55,6 +55,8 @@
 #define FPC1020_RESET_HIGH2_US 1250
 #define FPC_TTW_HOLD_TIME 1000
 
+#define CONFIG_PROXIMITY_POCKET_MODE
+
 struct fpc1020_data {
 	struct device *dev;
 	int  irq_gpio;
@@ -62,7 +64,10 @@ struct fpc1020_data {
 	int  rst_gpio;
 	int  fp_id_gpio;
 	int  wakeup_enabled;
-
+#ifdef CONFIG_PROXIMITY_POCKET_MODE
+	int  proximity_state;
+	struct mutex lock;
+#endif 
 	struct pinctrl         *ts_pinctrl;
 	struct pinctrl_state   *gpio_state_active;
 	struct pinctrl_state   *gpio_state_suspend;
@@ -72,6 +77,7 @@ struct fpc1020_data {
 	struct work_struct reset_work;
 	struct workqueue_struct *reset_workqueue;
 #endif
+
 
 };
 
@@ -144,6 +150,49 @@ static int fpc1020_request_named_gpio(struct fpc1020_data *fpc1020,
 	dev_info(dev, "%s - gpio: %d\n", label, *gpio);
 	return 0;
 }
+#ifdef CONFIG_PROXIMITY_POCKET_MODE
+static ssize_t proximity_state_set(struct device *dev,
+	struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct fpc1020_data *fpc1020 = dev_get_drvdata(dev);
+	int rc, val;
+
+	rc = kstrtoint(buf, 10, &val);
+	if (rc)
+		return -EINVAL;
+
+	if ((val == 0) && (fpc1020->proximity_state == 1))
+	{
+		mutex_lock(&fpc1020->lock);
+		enable_irq( gpio_to_irq( fpc1020->irq_gpio ) );
+		fpc1020->proximity_state = 0;
+		mutex_unlock(&fpc1020->lock);
+		dev_info(dev,"Boeffla: pocketmode disabled\n");
+	}
+	else if ((val == 1) && (fpc1020->proximity_state == 0))
+	{
+		mutex_lock(&fpc1020->lock);
+		disable_irq( gpio_to_irq( fpc1020->irq_gpio ) );
+		fpc1020->proximity_state = 1;
+		mutex_unlock(&fpc1020->lock);
+		dev_info(dev,"Boeffla: pocketmode enabled\n");
+	}
+
+	return count;
+}
+
+static ssize_t proximity_state_get(struct device* device,
+			     struct device_attribute* attribute,
+			     char* buffer)
+{
+	struct fpc1020_data* fpc1020 = dev_get_drvdata(device);
+	return scnprintf(buffer, PAGE_SIZE, "%d\n", fpc1020->proximity_state);
+}
+
+static DEVICE_ATTR(proximity_state, S_IRUSR | S_IWUSR, proximity_state_get, proximity_state_set);
+
+
+#endif
 
 /* -------------------------------------------------------------------- */
 static int fpc1020_pinctrl_init_tee(struct fpc1020_data *fpc1020)
@@ -260,6 +309,7 @@ static ssize_t enable_wakeup_store(struct device *dev,
 		return -EINVAL;
 	}
 }
+
 static DEVICE_ATTR(enable_wakeup, S_IWUSR | S_IRUSR, enable_wakeup_show,
 		   enable_wakeup_store);
 
@@ -267,6 +317,9 @@ static DEVICE_ATTR(enable_wakeup, S_IWUSR | S_IRUSR, enable_wakeup_show,
 static struct attribute *attributes[] = {
 	&dev_attr_irq.attr,
 	&dev_attr_enable_wakeup.attr,
+#ifdef CONFIG_PROXIMITY_POCKET_MODE
+	&dev_attr_proximity_state.attr,
+#endif
 	NULL
 };
 
@@ -282,12 +335,12 @@ static irqreturn_t fpc1020_irq_handler(int irq, void *handle)
 	/* Make sure 'wakeup_enabled' is updated before using it
 	** since this is interrupt context (other thread...) */
 	smp_rmb();
+	
 
 	if (fpc1020->wakeup_enabled) {
 		wake_lock_timeout(&fpc1020->ttw_wl, msecs_to_jiffies(FPC_TTW_HOLD_TIME));
 		dev_info(fpc1020->dev, "%s - wake_lock_timeout\n", __func__);
 	}
-
 	sysfs_notify(&fpc1020->dev->kobj, NULL, dev_attr_irq.attr.name);
 
 	return IRQ_HANDLED;
@@ -436,9 +489,11 @@ static int fpc1020_tee_probe(struct platform_device *pdev)
 		goto exit;
 
 	wake_lock_init(&fpc1020->ttw_wl, WAKE_LOCK_SUSPEND, "fpc_ttw_wl");
-
+#ifdef CONFIG_PROXIMITY_POCKET_MODE
+	fpc1020->proximity_state = 0;	
+#endif
 	irqf = IRQF_TRIGGER_RISING | IRQF_ONESHOT;
-
+	mutex_init(&fpc1020->lock);
 	rc = devm_request_threaded_irq(dev, gpio_to_irq(fpc1020->irq_gpio),
 			NULL, fpc1020_irq_handler, irqf,
 			dev_name(dev), fpc1020);

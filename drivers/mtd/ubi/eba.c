@@ -995,9 +995,10 @@ retry:
 		goto write_error;
 	}
 
-	old_pnum = vol->eba_tbl[lnum];
+	ubi_assert(vol->eba_tbl[lnum] < 0);
+	down_read(&ubi->fm_sem);
 	vol->eba_tbl[lnum] = pnum;
-	up_read(&ubi->fm_eba_sem);
+	up_read(&ubi->fm_sem);
 
 	if (old_pnum >= 0) {
 		err = ubi_wl_put_peb(ubi, vol_id, lnum, old_pnum, 0);

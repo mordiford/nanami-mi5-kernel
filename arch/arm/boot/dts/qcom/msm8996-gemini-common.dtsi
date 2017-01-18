@@ -351,6 +351,7 @@
 };
 
 &mdss_dsi0 {
+	vddr-supply = <&disp_vddr_vreg>;
 	qcom,dsi-pref-prim-pan = <&dsi_sharp_fhd_nt35695_video>;
 	pinctrl-names = "mdss_default", "mdss_sleep";
 	pinctrl-0 = <&mdss_dsi_active &mdss_te_active>;
@@ -409,6 +410,7 @@
 	qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_wled";
 	qcom,mdss-dsi-bl-min-level = <1>;
 	qcom,mdss-dsi-bl-max-level = <4095>;
+	qcom,cont-splash-enabled;
 	qcom,panel-supply-entries = <&dsi_panel_pwr_supply>;
 };
 
@@ -422,6 +424,8 @@
 / {
 	mtp_batterydata: qcom,battery-data {
 		qcom,batt-id-range-pct = <15>;
+		#include "batterydata-a1-atl-3000mah.dtsi"
+		#include "batterydata-a1-sdi-3000mah.dtsi"
 		#include "batterydata-itech-3020mah.dtsi"
 	};
 };
@@ -1182,8 +1186,8 @@
 &spmi_bus {
 	qcom,pm8994@0 {
 		qcom,power-on@800 {
-			qcom,s3-debounce = <16>;
-			qcom,s3-src = "kpdpwr";
+			qcom,s3-debounce = <32>;
+			qcom,s3-src = "kpdpwr-and-resin";
 
 			qcom,pon_1 {
 				qcom,s1-timer = <4480>;
@@ -1209,17 +1213,22 @@
 		pm8994_pwm_4: pwm@b400 {
 			status = "okay";
 		};
+
+		pm8994_pwm_6: pwm@b600 {
+			status = "okay";
+		};
 	};
 };
 // msm-pm8994.dtsi end
 
 // msm-pmi8994.dtsi start
 &pmi8994_charger {
-	qcom,fastchg-current-ma = <2300>;
+	qcom,fastchg-current-ma = <3000>;
 	qcom,float-voltage-mv = <4400>;
-	qcom,thermal-mitigation = <1500 1200 1000 0>;
-	qcom,fastchg-current-comp = <900>;
+	qcom,thermal-mitigation = <2500 2000 1500 1000>;
+	qcom,fastchg-current-comp = <1200>;
 	qcom,float-voltage-comp = <16>;
+	qcom,override-usb-current;
 };
 
 &pmi8994_fg {
@@ -1227,7 +1236,7 @@
 	qcom,fg-iterm-ma = <200>;
 	fg-cutoff-voltage-mv = <3400>;
 	qcom,thermal-coefficients = [DA 86 F0 50 08 3C];
-	qcom,vbat-estimate-diff-mv = <100>;
+	qcom,vbat-estimate-diff-mv = <300>;
 
 	qcom,warm-bat-decidegc = <450>;
 	qcom,cool-bat-decidegc = <100>;
@@ -1246,6 +1255,7 @@
 	qcom,switch-freq-khz = <600>;
 	qcom,fs-curr-ua = <20000>;
 	qcom,en-cabc;
+	qcom,en-phase-stag;
 	qcom,led-strings-list = [00 01];
 };
 
@@ -1295,6 +1305,46 @@
 // msm-pmi8994.dtsi end
 
 // msm8996-camera.dtsi start
+&soc {
+	qcom,csiphy@a34000 {
+		qcom,clock-rates = <0 0 266670000 0 0 320000000 0>;
+	};
+
+	qcom,csiphy@a35000 {
+		qcom,clock-rates = <0 0 266670000 0 0 320000000 0>;
+	};
+
+	qcom,csiphy@a36000 {
+		qcom,clock-rates = <0 0 266670000 0 0 320000000 0>;
+	};
+
+	qcom,csid@a30000 {
+		qcom,clock-rates = <0 0 0 480000000 0 0 0 0 0 0>;
+	};
+
+	qcom,csid@a30400 {
+		qcom,clock-rates = <0 0 0 480000000 0 0 0 0 0 0>;
+	};
+
+	qcom,csid@a30800 {
+		qcom,clock-rates = <0 0 0 480000000 0 0 0 0 0 0>;
+	};
+
+	qcom,csid@a30c00 {
+		qcom,clock-rates = <0 0 0 480000000 0 0 0 0 0 0>;
+	};
+
+	qcom,ispif@a31000 {
+		qcom,clock-rates = <0 0 0 0
+			480000000 0 0 0
+			480000000 0 0 0
+			480000000 0 0 0
+			480000000 0 0 0
+			0 0 0
+			0 0 0>;
+	};
+};
+
 &i2c_freq_100Khz {
 	qcom,hw-scl-stretch-en = <1>;
 };
@@ -1305,13 +1355,13 @@
 };
 
 &i2c_freq_custom {
-	qcom,hw-thigh = <15>;
-	qcom,hw-tlow = <28>;
-	qcom,hw-tsu-sto = <21>;
-	qcom,hw-tsu-sta = <21>;
-	qcom,hw-thd-dat = <13>;
-	qcom,hw-thd-sta = <18>;
-	qcom,hw-tbuf = <25>;
+	qcom,hw-thigh = <38>;
+	qcom,hw-tlow = <56>;
+	qcom,hw-tsu-sto = <40>;
+	qcom,hw-tsu-sta = <40>;
+	qcom,hw-thd-dat = <22>;
+	qcom,hw-thd-sta = <35>;
+	qcom,hw-tbuf = <62>;
 };
 
 &i2c_freq_1Mhz {
@@ -1781,6 +1831,7 @@
 		regulator-name = "disp_vddr_vreg";
 		startup-delay-us = <4000>;
 		enable-active-high;
+		regulator-boot-on;
 		gpio = <&tlmm 40 0>;
 	};
 };
@@ -1952,7 +2003,53 @@
 	qcom,pet-time = <15000>;
 };
 
+&pcm1 {
+	/delete-property/ qcom,latency-level;
+};
+
 &pcm2 {
 	/delete-property/ qcom,latency-level;
+};
+
+&qcom_seecom {
+	reg = <0x86600000 0x3600000>;
+};
+
+&qusb_phy0 {
+	reg = <0x07411000 0x180>,
+		<0x06af8800 0x400>,
+		<0x00388018 0x4>;
+	reg-names = "qusb_phy_base", "qscratch_base", "ref_clk_addr";
+	qcom,qusb-phy-init-seq = <0x38 0x80
+				0x7b 0x84
+				0x93 0x88
+				0xcf 0x8c
+				0x30 0x8
+				0x79 0xc
+				0x21 0x10
+				0x14 0x9c
+				0x9f 0x1c
+				0x0 0x18>;
+};
+
+&qusb_phy1 {
+	reg = <0x07412000 0x180>,
+		<0x076f8800 0x400>,
+		<0x00388014 0x4>;
+	reg-names = "qusb_phy_base", "qscratch_base", "ref_clk_addr";
+	qcom,qusb-phy-init-seq = <0x38 0x80
+				0x7b 0x84
+				0x93 0x88
+				0xcf 0x8c
+				0x30 0x8
+				0x79 0xc
+				0x21 0x10
+				0x14 0x9c
+				0x9f 0x1c
+				0x0 0x18>;
+};
+
+&usb3 {
+	qcom,detect-dpdm-floating;
 };
 // msm8996.dtsi end

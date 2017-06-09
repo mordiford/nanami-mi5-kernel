@@ -1,4 +1,4 @@
-CONFIG_LOCALVERSION="_nanami-mi5-kernel_v5.0.1"
+CONFIG_LOCALVERSION="_nanami-mi5-kernel_v5.0.2"
 CONFIG_AUDIT=y
 # CONFIG_AUDITSYSCALL is not set
 CONFIG_NO_HZ=y
